@@ -105,18 +105,16 @@ for row in clean:
     print(row)
 
 
+less_nodes = [nodes[0]]
+for i in range(1, len(nodes) - 1):
+    if (nodes[i - 1][0] + nodes[i + 1][0] == nodes[i][0] * 2) and (nodes[i - 1][1] + nodes[i + 1][1] == nodes[i][1] * 2):
+        # then we can skip us
+        pass
+    else:
+        less_nodes.append(nodes[i])
+less_nodes.append(nodes[-1])
 
-
-# less_nodes = [nodes[0]]
-# for i in range(1, len(nodes) - 1):
-#     if (nodes[i - 1][0] + nodes[i + 1][0] == nodes[i][0] * 2) and (nodes[i - 1][1] + nodes[i + 1][1] == nodes[i][1] * 2):
-#         # then we can skip us
-#         pass
-#     else:
-#         less_nodes.append(nodes[i])
-# less_nodes.append(nodes[-1])
-
-# nodes = less_nodes
+nodes = less_nodes
 
 edges = []
 for i in range(1, len(nodes)):
