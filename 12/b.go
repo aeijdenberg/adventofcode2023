@@ -17,9 +17,22 @@ type Line struct {
 	Nums      []int
 	GoodMaybe []bool
 	BadMaybe  []bool
+
+	cachedAnswers map[int]int
 }
 
 func (l *Line) processBit(idx, counts, badCount int) int {
+	key := (idx << 32) | (counts << 16) | badCount
+	rv, ok := l.cachedAnswers[key]
+	if ok {
+		return rv
+	}
+	rv = l.expProcessBit(idx, counts, badCount)
+	l.cachedAnswers[key] = rv
+	return rv
+}
+
+func (l *Line) expProcessBit(idx, counts, badCount int) int {
 	if idx == l.Len {
 		if badCount == 0 {
 			if l.NumLen == counts {
@@ -35,6 +48,7 @@ func (l *Line) processBit(idx, counts, badCount int) int {
 			}
 		}
 	} else {
+
 		rv := 0
 		if l.GoodMaybe[idx] {
 			if badCount == 0 {
@@ -64,13 +78,13 @@ func processLine(springs string, nums []int) int {
 			maybeGood[i] = true
 		}
 	}
-
 	return (&Line{
-		Nums:      nums,
-		NumLen:    len(nums),
-		Len:       len(springs),
-		GoodMaybe: maybeGood,
-		BadMaybe:  maybeBad,
+		Nums:          nums,
+		NumLen:        len(nums),
+		Len:           len(springs),
+		GoodMaybe:     maybeGood,
+		BadMaybe:      maybeBad,
+		cachedAnswers: make(map[int]int),
 	}).processBit(0, 0, 0)
 }
 
@@ -116,13 +130,13 @@ func doit() error {
 			}
 		}
 		wg.Add(1)
-		go func(idx int, ss string, n []int) {
+		go func(idx int, ss string, n []int, ll string) {
 			results <- result{
 				Index: idx,
 				Count: processLine(ss, n),
 			}
 			wg.Done()
-		}(j, bits[0], nums)
+		}(j, bits[0], nums, line)
 	}
 
 	var wgCount sync.WaitGroup
@@ -130,7 +144,7 @@ func doit() error {
 	go func() {
 		count := 0
 		for v := range results {
-			fmt.Printf("Line %d: %d\n", v.Index+1, v.Count)
+			// fmt.Printf("Line %d: %d\n", v.Index+1, v.Count)
 			count += v.Count
 		}
 		fmt.Printf("Total: %d\n", count)
@@ -151,64 +165,3 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
-/*
-import sys
-
-
-def processme(springs, nums, idx, counts, badCount, minDone, maxDone, running):
-    if idx == len(springs):
-        if badCount:
-            return nums[-1] == badCount and len(nums) == (counts + 1)
-        else:
-            return len(nums) == counts
-
-    if running < minDone[idx] or running > maxDone[idx]:
-        return 0
-
-    rv = 0
-    if springs[idx] in '#?': # damaged
-        if counts < len(nums) and badCount < nums[counts]:
-            rv += processme(springs, nums, idx + 1, counts, badCount + 1, minDone, maxDone, running + 1)
-
-    if springs[idx] in '.?': # good
-        if badCount:
-            if counts < len(nums) and badCount == nums[counts]:
-                rv += processme(springs, nums, idx + 1, counts + 1, 0, minDone, maxDone, running)
-        else:
-            rv += processme(springs, nums, idx + 1, counts, 0, minDone, maxDone, running)
-
-    return rv
-
-def doit(line):
-    rv = 0
-    springs, nums = line.split(' ')
-
-    springs = '?'.join([springs] * 5)
-    nums = ','.join([nums] * 5)
-
-    nums = [int(x) for x in nums.split(',')]
-
-    shortest = '.'.join('#' * n for n in nums)
-    rightest = (' ' * (len(springs) - len(shortest))) + shortest
-    leftest = shortest + (' ' * (len(springs) - len(shortest)))
-
-    minDone = [rightest[:i].count('#') for i in range(len(springs))]
-    maxDone = [leftest[:i].count('#') for i in range(len(springs))]
-
-    return processme(springs, nums, 0, 0, 0, minDone, maxDone, 0)
-
-i = 0
-mm = int(sys.argv[1])
-idx = int(sys.argv[2])
-for line in sys.stdin:
-    line = line.strip()
-    if len(line):
-        if i % mm == idx:
-            rv = doit(line)
-            print(i, rv, flush=True)
-        i += 1
-
-
-print(rv)
-*/
