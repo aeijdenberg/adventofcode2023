@@ -27,6 +27,7 @@ results = {'0_0_e': 0}
 
 q = queue.PriorityQueue()
 q.put((0, 0, 0, 'e'))
+q.put((0, 0, 0, 's'))
 while not q.empty():
     acc, x, y, d = q.get()
     for nd in allowed_dirs[d]:
@@ -56,5 +57,3 @@ for rkey, rval in results.items():
         pots.add(rval)
 
 print(min(pots))
-
-# 384 too low
